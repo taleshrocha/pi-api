@@ -1,21 +1,102 @@
 package com.ufrn.br.piapi;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Controller
 public class FiiController {
+
+    @Data
+    public static class Completo {
+            @JsonProperty("post_title")
+            private String postTitle;
+
+            private String setor;
+
+            private Double valor;
+
+            @JsonProperty("liquidezmediadiaria")
+            private Double liquidezMediaDiaria;
+
+            private Double pvp;
+
+            private Double dividendo;
+
+            private Double yeld;
+
+            @JsonProperty("soma_yield_3m")
+            private Double somaYield3m;
+
+            @JsonProperty("soma_yield_6m")
+            private Double somaYield6m;
+
+            @JsonProperty("soma_yield_12m")
+            private Double somaYield12m;
+
+            @JsonProperty("media_yield_3m")
+            private Double mediaYield3m;
+
+            @JsonProperty("media_yield_6m")
+            private Double mediaYield6m;
+
+            @JsonProperty("media_yield_12m")
+            private Double mediaYield12m;
+
+            @JsonProperty("soma_yield_ano_corrente")
+            private Double somaYieldAnoCorrente;
+
+            @JsonProperty("variacao_cotacao_mes")
+            private Double variacaoCotacaoMes;
+
+            @JsonProperty("rentabilidade_mes")
+            private Double rentabilidadeMes;
+
+            private Double rentabilidade;
+
+            private Double patrimonio;
+
+            private Double vpa;
+
+            @JsonProperty("p_vpa")
+            private Double pVpa;
+
+            @JsonProperty("vpa_yield")
+            private Double vpaYield;
+
+            @JsonProperty("vpa_change")
+            private Double vpaChange;
+
+            @JsonProperty("vpa_rent_m")
+            private Double vpaRentM;
+
+            @JsonProperty("vpa_rent")
+            private Double vpaRent;
+
+            private String ativos;
+
+            private Double volatility;
+
+            @JsonProperty("numero_cotista")
+            private Double numeroCotista;
+
+            private Double txGestao;
+
+            private Double txAdmin;
+
+            @JsonProperty("tx_performance")
+            private Double txPerformance;
+    }
 
     @Data
     public static class Geral {
@@ -137,5 +218,23 @@ public class FiiController {
         List<HistoricoDividendo> fiiList = Arrays.asList(responseDataArray);
 
         return ResponseEntity.ok(fiiList);
+    }
+
+    @GetMapping("/fii/filtrar")
+    public ResponseEntity<List<Completo>> filtrar(
+            @RequestParam(value = "pvpMin", required = false) Double pvpMin,
+            @RequestParam(value = "pvpMax", required = false) Double pvpMax,
+            @RequestParam(value = "liquidezMin", required = false) Double liquidezMin) {
+
+        Completo[] responseDataArray = restTemplate.getForObject(apiUrl, Completo[].class);
+        List<Completo> fiiList = Arrays.asList(responseDataArray);
+
+        List<Completo> filteredFiiList = fiiList.stream()
+                .filter(fii -> (liquidezMin == null || fii.getLiquidezMediaDiaria() >= liquidezMin)
+                                && (pvpMax == null || fii.getPvp() <= pvpMax)
+                                && (pvpMin == null || fii.getPvp() >= pvpMin))
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(filteredFiiList);
     }
 }
